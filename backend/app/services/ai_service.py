@@ -74,7 +74,7 @@ class AIService:
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     
-    def predict(self, image_path: Path) -> tuple[str, float]:
+    def predict(self, image_path: Path) -> tuple[str, float, list[dict]]:
         """
         对图片进行病害预测
         
@@ -82,7 +82,7 @@ class AIService:
             image_path: 图片路径
             
         Returns:
-            (预测类别, 置信度)
+            (预测类别, 置信度, Top-3预测列表)
         """
         # 加载并预处理图片
         image = Image.open(image_path).convert("RGB")
@@ -92,16 +92,25 @@ class AIService:
         if self._model is None:
             import random
             idx = random.randint(0, len(self._class_mapping) - 1)
-            return self._class_mapping[str(idx)], random.uniform(0.7, 0.99)
+            conf = random.uniform(0.7, 0.99)
+            top_predictions = [{"class": self._class_mapping[str(idx)], "confidence": round(conf, 4)}]
+            return self._class_mapping[str(idx)], conf, top_predictions
         
         # 推理
         with torch.no_grad():
             outputs = self._model(input_tensor)
             probabilities = torch.softmax(outputs, dim=1)
-            confidence, predicted_idx = torch.max(probabilities, 1)
+            top3_conf, top3_idx = torch.topk(probabilities, k=min(3, probabilities.size(1)), dim=1)
         
-        predicted_class = self._class_mapping.get(str(predicted_idx.item()), "Unknown")
-        return predicted_class, confidence.item()
+        # 构建 Top-3 结果
+        top_predictions = []
+        for i in range(top3_idx.size(1)):
+            cls_name = self._class_mapping.get(str(top3_idx[0, i].item()), "Unknown")
+            top_predictions.append({"class": cls_name, "confidence": round(top3_conf[0, i].item(), 4)})
+        
+        predicted_class = top_predictions[0]["class"]
+        confidence = top_predictions[0]["confidence"]
+        return predicted_class, confidence, top_predictions
 
 
 # 全局服务实例

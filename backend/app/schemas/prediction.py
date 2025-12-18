@@ -6,9 +6,14 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class PredictionRequest(BaseModel):
-    """预测请求（用于文档说明，实际使用 UploadFile）"""
-    pass
+class TopPrediction(BaseModel):
+    """单个预测结果"""
+    class_name: str  # 使用 class_name 避免与 Python 关键字冲突
+    confidence: float
+
+    class Config:
+        # 允许从 dict 的 "class" 字段映射
+        populate_by_name = True
 
 
 class PredictionResponse(BaseModel):
@@ -16,6 +21,7 @@ class PredictionResponse(BaseModel):
     predicted_class: str  # 预测的病害类别
     confidence: float     # 置信度 (0-1)
     image_url: str        # 图片访问路径
+    top_predictions: list[dict]  # Top-3 预测结果
     
     class Config:
         from_attributes = True

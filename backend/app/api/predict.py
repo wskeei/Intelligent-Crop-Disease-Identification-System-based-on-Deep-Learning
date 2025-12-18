@@ -43,7 +43,7 @@ async def predict_disease(
         f.write(content)
     
     # 执行预测
-    predicted_class, confidence = ai_service.predict(file_path)
+    predicted_class, confidence, top_predictions = ai_service.predict(file_path)
     
     # 保存记录到数据库
     record = PredictionRecord(
@@ -57,5 +57,6 @@ async def predict_disease(
     return PredictionResponse(
         predicted_class=predicted_class,
         confidence=round(confidence, 4),
-        image_url=f"/uploads/{filename}"
+        image_url=f"/uploads/{filename}",
+        top_predictions=top_predictions
     )
