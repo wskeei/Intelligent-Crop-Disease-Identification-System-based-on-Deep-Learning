@@ -8,6 +8,8 @@ from PIL import Image
 import torch
 import torch.nn as nn
 from torchvision import transforms, models
+import torch.quantization
+
 
 from app.core.config import settings
 
@@ -30,29 +32,74 @@ class AIService:
             self._load_model()
             self._setup_transform()
     
+        if "classes" in checkpoint:
+            self._class_mapping = {str(i): name for i, name in enumerate(checkpoint["classes"])}
+
+    def _load_mobilenet_quantized(self):
+        """Try to load the new quantized MobileNetV3 model"""
+        # Define paths for new model (this is a placeholder logic, usually we'd have a config switch)
+        # For now, we will add a check in _load_model to prefer this if it exists
+        pass
+
     def _load_model(self):
         """加载训练好的模型"""
-        model_path = settings.MODEL_DIR / settings.MODEL_PATH
+        # Prioritize Quantized Utils if available
+        quantized_path = settings.MODEL_DIR / "quantized_model_scripted.pt" 
+        # Or state dict path
+        quantized_state_path = settings.MODEL_DIR / "quantized_mobilenet_se.pth"
+        
         mapping_path = settings.MODEL_DIR / settings.CLASS_MAPPING_PATH
-        
-        # 检查模型文件是否存在
-        if not model_path.exists():
-            print(f"警告: 模型文件不存在 {model_path}，使用模拟模式")
-            self._class_mapping = {str(i): f"Disease_{i}" for i in range(38)}
-            return
-        
-        # 加载类别映射
+        model_path = settings.MODEL_DIR / settings.MODEL_PATH # Fallback old model
+
+        # Load Mapping
         if mapping_path.exists():
             with open(mapping_path, "r") as f:
                 self._class_mapping = json.load(f)
         else:
             self._class_mapping = {str(i): f"Disease_{i}" for i in range(38)}
+            
+        # Try loading Quantized Script Model first (Fastest)
+        if quantized_path.exists():
+            print(f"Loading Quantized Model (Scripted) from {quantized_path}")
+            try:
+                self._model = torch.jit.load(quantized_path)
+                self._model.eval()
+                print("Quantized Model Loaded Successfully")
+                return
+            except Exception as e:
+                print(f"Failed to load scripted model: {e}")
+
+        # Try loading Quantized State Dict
+        if quantized_state_path.exists():
+             print(f"Loading Quantized Model (State Dict) from {quantized_state_path}")
+             try:
+                 # Reconstruct Model Structure
+                 from torchvision.models import mobilenet_v3_large
+                 model = mobilenet_v3_large(weights=None)
+                 num_classes = len(self._class_mapping)
+                 model.classifier[3] = nn.Linear(model.classifier[3].in_features, num_classes)
+                 
+                 # Prepare for QAT/Quantization structure matches
+                 model.qconfig = torch.ao.quantization.get_default_qat_qconfig('fbgemm')
+                 torch.ao.quantization.prepare_qat(model, inplace=True)
+                 torch.ao.quantization.convert(model, inplace=True)
+                 
+                 model.load_state_dict(torch.load(quantized_state_path, map_location='cpu'))
+                 self._model = model
+                 self._model.eval()
+                 return
+             except Exception as e:
+                 print(f"Failed to load quantized state dict: {e}")
+
+        # Fallback to Original ResNet50
+        print(f"Loading Standard Model from {model_path}")
+        if not model_path.exists():
+            print(f"警告: 模型文件不存在 {model_path}，使用模拟模式")
+            return
         
-        # 加载模型
         checkpoint = torch.load(model_path, map_location="cpu", weights_only=False)
         num_classes = checkpoint.get("num_classes", len(self._class_mapping))
         
-        # 构建模型结构
         self._model = models.resnet50(weights=None)
         self._model.fc = nn.Sequential(
             nn.Dropout(0.5),
@@ -61,9 +108,9 @@ class AIService:
         self._model.load_state_dict(checkpoint["model_state_dict"])
         self._model.eval()
         
-        # 更新类别映射
         if "classes" in checkpoint:
             self._class_mapping = {str(i): name for i, name in enumerate(checkpoint["classes"])}
+
     
     def _setup_transform(self):
         """设置图像预处理"""
