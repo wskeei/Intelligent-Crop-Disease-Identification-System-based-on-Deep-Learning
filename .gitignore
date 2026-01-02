@@ -92,3 +92,5 @@ dmypy.json
 
 # Ruff
 .ruff_cache/
+
+data/
