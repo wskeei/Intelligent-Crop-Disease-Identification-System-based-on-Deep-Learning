@@ -50,6 +50,7 @@ env/
 # Models and Training
 models/
 !models/.gitkeep
+!backend/app/models/
 *.zip
 *.pkl
 *.pth
