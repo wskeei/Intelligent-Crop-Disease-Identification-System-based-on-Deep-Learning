@@ -53,12 +53,13 @@
 * [X] **模型评估**: 输出准确率 (Accuracy) 与混淆矩阵，保存最佳权重文件 (`.pth`)。
 
 ### Phase 2: 后端服务开发 (Backend API)
-
+ 
 * [X] **环境搭建**: 使用 `uv` 初始化项目，配置虚拟环境。
 * [X] **API 基础**: 搭建 FastAPI 骨架，配置 CORS 与日志。
 * [X] **模型服务化**: 编写单例加载器，实现图像预测接口 (`POST /api/predict`)，支持 Top-3 结果。
 * [X] **数据库集成**: 设计 SQLite 表结构，实现历史记录存储接口。
 * [X] **扩展接口**: 历史详情、删除、批量删除、趋势统计、增强统计接口。
+* [X] **模型集成**: 集成 `quantized_model_scripted.pt` (Quantized MobileNetV3) 实现高性能推理。
 
 ### Phase 3: 前端应用构建 (Frontend UI)
 
@@ -86,12 +87,6 @@
 * [ ] **系统设置页**: 主题切换 + 语言设置 + 数据管理
 * [ ] **暗色主题**: Element Plus 暗色模式适配
 * [ ] **响应式适配**: 移动端/平板端布局适配
-
-### Phase 4: 部署与优化 (Deployment)
-
-* [ ] **Docker 化**: 编写 `Dockerfile` 与 `docker-compose.yml`。
-* [ ] **性能优化**: 尝试将模型导出为 ONNX 格式以加速推理。
-
 ---
 
 ## 📂 目录结构 (Directory Structure)
@@ -146,9 +141,3 @@ npm install
 npm run dev
 
 ```
-
----
-
-### 💡 下一步建议
-
-这个 README 已经为你搭好了骨架。为了让你能立刻开始动手，**你需要我先帮你生成 `backend` 文件夹下的 `pyproject.toml` 依赖配置文件，还是先帮你写那个“模型训练”的 Python 脚本？**

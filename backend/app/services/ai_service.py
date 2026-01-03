@@ -10,6 +10,9 @@ import torch.nn as nn
 from torchvision import transforms, models
 import torch.quantization
 
+# torch.backends.quantized.engine = 'fbgemm' # Not supported on this env
+
+
 
 from app.core.config import settings
 
@@ -32,8 +35,7 @@ class AIService:
             self._load_model()
             self._setup_transform()
     
-        if "classes" in checkpoint:
-            self._class_mapping = {str(i): name for i, name in enumerate(checkpoint["classes"])}
+
 
     def _load_mobilenet_quantized(self):
         """Try to load the new quantized MobileNetV3 model"""
