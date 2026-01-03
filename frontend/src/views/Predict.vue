@@ -149,8 +149,12 @@ const handlePredict = async () => {
   }
 }
 
+import { getChineseName } from '@/constants/diseases'
+
+// ... existing code ...
+
 const formatClassName = (name: string) => {
-  return name.replace(/___/g, ' - ').replace(/_/g, ' ')
+  return getChineseName(name)
 }
 </script>
 

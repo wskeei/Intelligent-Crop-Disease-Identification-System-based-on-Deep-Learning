@@ -57,67 +57,9 @@
 import { ref, computed } from 'vue'
 import { Search, ArrowRight } from '@element-plus/icons-vue'
 import GlassCard from '@/components/GlassCard.vue'
+import { diseases } from '@/constants/diseases'
 
 const searchQuery = ref('')
-
-// Mock data
-const diseases = [
-  {
-    id: 'apple_scab',
-    name: '苹果黑星病',
-    category: '真菌病害',
-    icon: '🍎',
-    description: '主要危害叶片、果实和嫩梢。叶片发病初期产生黄绿色斑点...',
-    severity: '高风险',
-    severityLevel: 'high'
-  },
-  {
-    id: 'corn_common_rust',
-    name: '玉米普通锈病',
-    category: '真菌病害',
-    icon: '🌽',
-    description: '在叶片两面散生或聚生圆形至长椭圆形隆起的夏孢子堆...',
-    severity: '中风险',
-    severityLevel: 'medium'
-  },
-  {
-    id: 'grape_black_rot',
-    name: '葡萄黑腐病',
-    category: '真菌病害',
-    icon: '🍇',
-    description: '主要危害果实、叶片。果实受害后变黑、干缩...',
-    severity: '高风险',
-    severityLevel: 'high'
-  },
-  {
-    id: 'tomato_bacterial_spot',
-    name: '番茄细菌性斑点病',
-    category: '细菌病害',
-    icon: '🍅',
-    description: '叶片上产生深褐色至黑色圆形小斑点，周围有黄色晕圈...',
-    severity: '中风险',
-    severityLevel: 'medium'
-  },
-  {
-    id: 'potato_early_blight',
-    name: '马铃薯早疫病',
-    category: '真菌病害',
-    icon: '🥔',
-    description: '主要侵染叶片。病斑圆形或近圆形，黑褐色，具同心轮纹...',
-    severity: '低风险',
-    severityLevel: 'low'
-  },
-  {
-    id: 'strawberry_leaf_scorch',
-    name: '草莓叶枯病',
-    category: '真菌病害',
-    icon: '🍓',
-    description: '叶片上产生紫红色小斑点，后扩大为不规则形病斑...',
-    severity: '中风险',
-    severityLevel: 'medium'
-  }
-]
-
 const filteredDiseases = computed(() => {
   if (!searchQuery.value) return diseases
   const q = searchQuery.value.toLowerCase()

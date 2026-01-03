@@ -92,11 +92,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import { Monitor, Cpu, Bell, User } from '@element-plus/icons-vue'
 import GlassCard from '@/components/GlassCard.vue'
+import { useSettingsStore } from '@/stores/settings'
 
 const activeTab = ref('general')
+const settingsStore = useSettingsStore()
+// Use the store's settings object directly
+const settings = settingsStore.settings
 
 const menuItems = [
   { key: 'general', label: '通用设置', icon: Monitor },
@@ -104,18 +108,6 @@ const menuItems = [
   { key: 'notifications', label: '通知管理', icon: Bell },
   { key: 'account', label: '账户信息', icon: User },
 ]
-
-const settings = reactive({
-  theme: 'light',
-  language: 'zh-CN',
-  animations: true,
-  confidenceThreshold: 0.75,
-  model: 'resnet50',
-  tta: false,
-  notifyComplete: true,
-  notifyAlert: true,
-  weeklyReport: false
-})
 </script>
 
 <style scoped>

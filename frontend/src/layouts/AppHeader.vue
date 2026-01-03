@@ -8,7 +8,7 @@
         <component :is="isCollapsed ? Expand : Fold" />
       </el-icon>
       <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/' }">Home</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
         <el-breadcrumb-item v-if="route.name !== 'Dashboard'">{{ routeTitle }}</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
@@ -16,33 +16,57 @@
       <el-button circle plain text>
         <el-icon><Bell /></el-icon>
       </el-button>
-      <div class="user-profile">
-        <el-avatar :size="36" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
-        <span class="username">Admin</span>
-      </div>
+      
+      <el-dropdown trigger="click" @command="handleCommand">
+        <div class="user-profile">
+          <el-avatar :size="32" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
+          <span class="username">{{ authStore.user?.username || 'User' }}</span>
+          <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+        </div>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="profile">个人信息</el-dropdown-item>
+            <el-dropdown-item command="settings">系统设置</el-dropdown-item>
+            <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { Fold, Expand, Bell } from '@element-plus/icons-vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Fold, Expand, Bell, ArrowDown } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
+import { ElMessage } from 'element-plus'
 
 defineProps<{ isCollapsed?: boolean }>()
 defineEmits(['toggle-sidebar'])
 const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
 
 const routeTitles: Record<string, string> = {
-  Predict: 'New Scan',
-  History: 'History',
-  Analytics: 'Analytics',
-  Diseases: 'Knowledge Base',
-  DiseaseDetail: 'Disease Detail',
-  Settings: 'Settings',
-  Dashboard: 'Dashboard'
+  Predict: '智能识别',
+  History: '历史记录',
+  Analytics: '数据分析',
+  Diseases: '病害知识库',
+  DiseaseDetail: '病害详情',
+  Settings: '系统设置',
+  Dashboard: '工作台'
 }
 const routeTitle = computed(() => routeTitles[route.name as string] || '')
+
+const handleCommand = (command: string) => {
+  if (command === 'logout') {
+    authStore.logout()
+    ElMessage.success('已退出登录')
+  } else if (command === 'settings') {
+    router.push('/settings')
+  }
+}
 </script>
 
 <style scoped>
@@ -76,7 +100,7 @@ const routeTitle = computed(() => routeTitles[route.name as string] || '')
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 4px 12px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.5);

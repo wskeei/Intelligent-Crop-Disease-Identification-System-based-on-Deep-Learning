@@ -5,10 +5,16 @@
 
 :root {
   /* Nature Green Palette */
-  --primary-color: #10b981; /* Emerald 500 */
-  --primary-hover: #059669; /* Emerald 600 */
-  --primary-light: #d1fae5; /* Emerald 100 */
-  --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); /* Green to subtle blue mix */
+  --primary-color: #10b981;
+  /* Emerald 500 */
+  --primary-hover: #059669;
+  /* Emerald 600 */
+  --primary-light: #d1fae5;
+  /* Emerald 100 */
+  --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+  /* Green to subtle blue mix */
+  --text-main: #1f2937;
+  --text-secondary: #6b7280;
 
   /* Glassmorphism Variables */
   --glass-bg: rgba(255, 255, 255, 0.65);
@@ -20,30 +26,54 @@
   --el-font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
+html.dark {
+  /* Deep Night Palette */
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+  --text-main: #f9fafb;
+  --text-secondary: #9ca3af;
+
+  /* Dark Glass Mode */
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+
+  --el-fill-color-blank: transparent;
+  --el-text-color-primary: #e5e7eb;
+  --el-text-color-regular: #d1d5db;
+  --el-bg-color: #1f2937;
+  --el-border-color-light: rgba(255, 255, 255, 0.1);
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html, body, #app {
+html,
+body,
+#app {
   height: 100%;
   font-family: 'Plus Jakarta Sans', sans-serif;
   background: var(--bg-gradient);
-  color: #1f2937;
+  color: var(--text-main);
+  transition: background 0.5s ease;
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(16, 185, 129, 0.3);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(16, 185, 129, 0.6);
 }

@@ -142,7 +142,8 @@ const healthyPercent = computed(() =>
   stats.value ? Math.round(stats.value.healthy_rate * 100) : 0
 )
 
-const formatClassName = (name: string) => name.replace(/___/g, ' - ').replace(/_/g, ' ')
+import { getChineseName } from '@/constants/diseases'
+const formatClassName = (name: string) => getChineseName(name)
 const formatDate = (date: string) => new Date(date).toLocaleString('zh-CN')
 
 const initChart = () => {
