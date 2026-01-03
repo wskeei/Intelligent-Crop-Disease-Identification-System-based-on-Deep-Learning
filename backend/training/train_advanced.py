@@ -200,7 +200,9 @@ def main():
     val_size = len(full_dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(full_dataset, [train_size, val_size])
     
-    num_workers = 2 # Optimized for Windows, changed from 4
+    # Optimized for i9-13900HX (24 cores)
+    # 8 workers is usually a sweet spot on Windows; too many might cause overhead or errors.
+    num_workers = 8 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
     
@@ -291,23 +293,34 @@ def main():
     # 5. Phase 3: Quantization Aware Training (QAT)
     print("\n[STEP 5/5] Quantization Aware Training (QAT)...")
     
-    # Move to CPU for safe QAT
-    print("[INFO] Moving model to CPU for QAT stability...")
-    student.to('cpu') 
-    teacher.to('cpu') # Also move teacher to CPU
-    criterion_qat = torch.nn.CrossEntropyLoss()
+    # [OPTIMIZATION] Run QAT on GPU!
+    # We DO NOT move to CPU here anymore.
+    print(f"[INFO] Running QAT on {device} for speed...")
+    # student.to('cpu')  <-- REMOVED
+    # teacher.to('cpu')  <-- REMOVED
     
+    # Ensure criterion is on device
+    criterion_qat = torch.nn.CrossEntropyLoss().to(device)
+    
+    # Prepare
     student.train() 
+    # prepare_qat adds fake quantization nodes. These work on GPU.
     student = prepare_model_for_qat(student)
+    # Ensure parameters are still on the correct device (prepare_qat usually preserves it, but strict check is good)
+    student.to(device)
+    
     optimizer = optim.Adam(student.parameters(), lr=args.lr * 0.01)
     
     print("Fine-tuning for QAT (using standard CE loss)...")
     ft_epochs_qat = max(1, epochs // 2)
     for epoch in range(ft_epochs_qat):
         running_loss = 0.0
-        pbar = tqdm(train_loader, desc=f"QAT Epoch {epoch+1}", leave=False)
+        # train_loader yields GPU tensors if we add a prefetcher or usually CPU tensors that we move in loop
+        # Loop below moves commands to device
+        pbar = tqdm(train_loader, desc=f"QAT Epoch {epoch+1}", leave=True)
         for images, labels in pbar:
-            # Images need to be on CPU now
+            images, labels = images.to(device), labels.to(device) # Move to GPU
+            
             optimizer.zero_grad()
             outputs = student(images)
             loss = criterion_qat(outputs, labels)
@@ -322,6 +335,9 @@ def main():
         print(f" >> Saved QAT Checkpoint (Epoch {epoch+1})")
     
     # Convert
+    # [CRITICAL] Move to CPU before conversion to production INT8 model
+    print("[INFO] Moving to CPU for final INT8 conversion...")
+    student.to('cpu')
     quantized_model = convert_qat_model(student)
     
     # Verify Quantized Model
