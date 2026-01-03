@@ -126,7 +126,7 @@ cd backend
 # 安装依赖
 uv sync
 # 激活环境并运行
-source .venv/bin/activate
+.venv\Scripts\activate
 uvicorn app.main:app --reload
 
 ```
