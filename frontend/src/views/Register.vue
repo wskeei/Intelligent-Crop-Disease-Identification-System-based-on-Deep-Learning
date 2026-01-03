@@ -8,8 +8,8 @@
     <GlassCard class="login-card" v-motion-pop-visible>
       <div class="logo-area">
         <div class="logo-icon">🌱</div>
-        <h2>欢迎回来</h2>
-        <p class="subtitle">智能作物病害识别系统</p>
+        <h2>注册账户</h2>
+        <p class="subtitle">加入智能作物病害识别系统</p>
       </div>
       
       <el-form 
@@ -37,7 +37,17 @@
             :prefix-icon="Lock"
             show-password
             class="glass-input"
-            @keyup.enter="handleLogin"
+          />
+        </el-form-item>
+
+        <el-form-item prop="confirmPassword">
+          <el-input 
+            v-model="form.confirmPassword" 
+            type="password" 
+            placeholder="确认密码" 
+            :prefix-icon="Lock"
+            show-password
+            class="glass-input"
           />
         </el-form-item>
         
@@ -45,19 +55,16 @@
           type="primary" 
           class="login-btn" 
           :loading="loading"
-          @click="handleLogin"
+          @click="handleRegister"
         >
-          登 录
+          注 册
         </el-button>
-
+        
         <div class="register-link">
-          还没有账号？ <router-link to="/register">立即注册</router-link>
+          已有账号？ <router-link to="/login">立即登录</router-link>
         </div>
       </el-form>
       
-      <div class="footer">
-        <span>测试账号: admin / 123456</span>
-      </div>
     </GlassCard>
   </div>
 </template>
@@ -68,38 +75,62 @@ import { useRouter } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { useAuthStore } from '@/stores/auth'
 import GlassCard from '@/components/GlassCard.vue'
+import axios from 'axios'
 
 const router = useRouter()
-const authStore = useAuthStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 
 const form = reactive({
   username: '',
-  password: ''
+  password: '',
+  confirmPassword: ''
 })
+
+const validatePass2 = (_: any, value: string, callback: any) => {
+  if (value === '') {
+    callback(new Error('请再次输入密码'))
+  } else if (value !== form.password) {
+    callback(new Error('两次输入密码不一致!'))
+  } else {
+    callback()
+  }
+}
 
 const rules = reactive<FormRules>({
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, message: '用户名长度不能小于 3 位', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能小于 6 位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { validator: validatePass2, trigger: 'blur' }
+  ]
 })
 
-const handleLogin = async () => {
+const handleRegister = async () => {
   if (!formRef.value) return
   
   await formRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
-      const success = await authStore.login(form.username, form.password)
-      if (success) {
-        ElMessage.success('登录成功')
-        router.push('/')
-      } else {
-        ElMessage.error('登录失败: 用户名或密码错误')
+      try {
+        await axios.post('http://localhost:8000/api/auth/register', {
+          username: form.username,
+          password: form.password,
+          email: null // Optional
+        })
+        ElMessage.success('注册成功，请登录')
+        router.push('/login')
+      } catch (error: any) {
+        ElMessage.error(error.response?.data?.detail || '注册失败，请稍后重试')
+      } finally {
+        loading.value = false
       }
-      loading.value = false
     }
   })
 }
@@ -215,13 +246,6 @@ const handleLogin = async () => {
 .login-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.footer {
-  margin-top: 24px;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 13px;
 }
 
 .register-link {

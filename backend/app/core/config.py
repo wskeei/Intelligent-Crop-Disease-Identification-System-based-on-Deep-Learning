@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     MODEL_PATH: str = "best_model.pth"
     CLASS_MAPPING_PATH: str = "class_mapping.json"
     
+    # Auth 配置
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
+    
     # 数据库配置
     DATABASE_URL: str = "sqlite+aiosqlite:///./cropvision.db"
     

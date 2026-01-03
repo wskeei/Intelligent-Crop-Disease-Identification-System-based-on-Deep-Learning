@@ -8,9 +8,11 @@ from pydantic import BaseModel
 from sqlalchemy import select, func, delete, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.prediction import PredictionRecord
 from app.schemas.prediction import PredictionHistoryResponse
+import os
 
 router = APIRouter(prefix="/api", tags=["历史记录"])
 
@@ -47,11 +49,30 @@ async def get_history_detail(id: int, db: AsyncSession = Depends(get_db)):
 @router.delete("/history/batch")
 async def batch_delete_history(req: BatchDeleteRequest, db: AsyncSession = Depends(get_db)):
     """批量删除识别记录"""
+    """批量删除识别记录"""
+    # 先查询要删除的记录以获取文件名
+    query = select(PredictionRecord).where(PredictionRecord.id.in_(req.ids))
+    result = await db.execute(query)
+    records = result.scalars().all()
+    
+    # 删除文件
+    deleted_files_count = 0
+    for record in records:
+        if record.image_path:
+            file_path = settings.UPLOAD_DIR / record.image_path
+            try:
+                if file_path.exists():
+                    os.remove(file_path)
+                    deleted_files_count += 1
+            except Exception as e:
+                print(f"Error deleting file {file_path}: {e}")
+
+    # 删除数据库记录
     result = await db.execute(
         delete(PredictionRecord).where(PredictionRecord.id.in_(req.ids))
     )
     await db.commit()
-    return {"success": True, "deleted_count": result.rowcount}
+    return {"success": True, "deleted_count": result.rowcount, "deleted_files": deleted_files_count}
 
 
 @router.delete("/history/{id}")
@@ -61,6 +82,16 @@ async def delete_history(id: int, db: AsyncSession = Depends(get_db)):
     record = result.scalar_one_or_none()
     if not record:
         raise HTTPException(status_code=404, detail="记录不存在")
+    
+    # 删除关联的图片文件
+    if record.image_path:
+        file_path = settings.UPLOAD_DIR / record.image_path
+        try:
+            if file_path.exists():
+                os.remove(file_path)
+        except Exception as e:
+            print(f"Error deleting file {file_path}: {e}")
+
     await db.delete(record)
     await db.commit()
     return {"success": True, "message": "删除成功"}

@@ -9,7 +9,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.database import init_db
-from app.api import predict_router, history_router
+from app.core.database import init_db
+from app.api import predict_router, history_router, auth_router
 
 
 @asynccontextmanager
@@ -46,6 +47,7 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads"
 # 注册路由
 app.include_router(predict_router)
 app.include_router(history_router)
+app.include_router(auth_router)
 
 
 @app.get("/", tags=["健康检查"])
