@@ -316,6 +316,10 @@ def main():
             running_loss += loss.item()
             pbar.set_postfix({'loss': loss.item()})
         print(f"QAT Epoch {epoch+1} - Loss: {running_loss/len(train_loader):.4f}")
+        
+        # Save QAT Checkpoint
+        torch.save(student.state_dict(), "student_qat_checkpoint.pth")
+        print(f" >> Saved QAT Checkpoint (Epoch {epoch+1})")
     
     # Convert
     quantized_model = convert_qat_model(student)
